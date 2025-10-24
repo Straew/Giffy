@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Giffy - Video to GIF Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 35px;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .file-select {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 3px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .file-select::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .file-select:hover::before {
+            left: 100%;
+        }
+        
+        .file-select:hover {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+        }
+        
+        .file-select.dragover {
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            transform: scale(1.02);
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.25);
+        }
+        
+        .file-icon {
+            font-size: 56px;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .file-select p {
+            font-size: 16px;
+            color: #334155;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .file-select small {
+            font-size: 13px;
+            color: #64748b;
+            display: block;
+            margin-top: 8px;
+        }
+        
+        .settings {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .settings-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .setting-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 12px 0;
+        }
+        
+        .setting-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+        
+        input[type="number"], input[type="text"] {
+            width: 100px;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .convert-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .convert-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .convert-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
+        }
+        
+        .convert-btn:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        
+        .convert-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress {
+            display: none;
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        .result {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .result h3 {
+            color: #059669;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .result img {
+            max-width: 100%;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 3px solid #f1f5f9;
+        }
+        
+        .download-btn {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            display: inline-block;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(5, 150, 105, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Giffy</h1>
+        
+        <div class="file-select" id="fileSelect">
+            <div class="file-icon">🎥</div>
+            <p>Click or drag video here</p>
+            <small>MP4, AVI, MOV, MKV, WEBM, WMV, FLV, 3GP</small>
+            <input type="file" id="fileInput" accept="video/*" style="display: none;">
+        </div>
+
+        <div class="settings">
+            <div class="settings-title">⚙️ Settings</div>
+            
+            <div class="setting-group">
+                <label for="fps">Frames per Second:</label>
+                <input type="number" id="fps" value="10" min="1" max="30">
+            </div>
+            
+            <div class="setting-group">
+                <label for="scale">Width (pixels):</label>
+                <input type="number" id="scale" value="480" min="100" max="1920">
+            </div>
+            
+            <div class="setting-group">
+                <label for="startTime">Start Time:</label>
+                <input type="text" id="startTime" placeholder="00:00:00">
+            </div>
+            
+            <div class="setting-group">
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" placeholder="Full">
+            </div>
+        </div>
+
+        <button class="convert-btn" id="convertBtn" disabled>✨ Convert to GIF</button>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <div class="result" id="result">
+            <h3>✅ Conversion Complete!</h3>
+            <img id="resultGif" src="" alt="Converted GIF">
+            <br>
+            <a href="#" class="download-btn" id="downloadLink">💾 Download GIF</a>
+        </div>
+    </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let selectedVideoPath = '';
+    let currentOutputPath = '';
+
+    // DOM elements
+    const fileSelect = document.getElementById('fileSelect');
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const progress = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const result = document.getElementById('result');
+    const resultGif = document.getElementById('resultGif');
+    const downloadLink = document.getElementById('downloadLink');
+
+    // File selection - SIMPLE AND RELIABLE
+    fileSelect.addEventListener('click', async () => {
+        console.log('File area clicked');
+        const videoPath = await ipcRenderer.invoke('select-video');
+        
+        if (videoPath) {
+            selectedVideoPath = videoPath;
+            const fileName = videoPath.split(/[\\/]/).pop();
+            
+            // Update the display
+            fileSelect.innerHTML = `
+                <div class="file-icon">✅</div>
+                <p>Selected: <strong>${fileName}</strong></p>
+                <small>Click to select a different file</small>
+                <input type="file" id="fileInput" accept="video/*" style="display: none;">
+            `;
+            
+            // Re-attach event listeners
+            const newFileInput = document.getElementById('fileInput');
+            newFileInput.addEventListener('change', handleFileInput);
+            
+            convertBtn.disabled = false;
+            console.log('Video selected via dialog:', selectedVideoPath);
+        }
+    });
+
+    // Handle file input changes (for drag & drop fallback)
+    function handleFileInput(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            selectedVideoPath = file.path;
+            updateFileDisplay(file.name);
+            convertBtn.disabled = false;
+            console.log('Video selected via file input:', selectedVideoPath);
+        }
+    }
+
+    fileInput.addEventListener('change', handleFileInput);
+
+    // Drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileSelect.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileSelect.addEventListener(eventName, () => {
+            fileSelect.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileSelect.addEventListener(eventName, () => {
+            fileSelect.classList.remove('dragover');
+        }, false);
+    });
+
+    fileSelect.addEventListener('drop', async (e) => {
+        const files = e.dataTransfer.files;
+        console.log('Files dropped:', files);
+        
+        if (files.length > 0) {
+            const file = files[0];
+            console.log('Dropped file:', file);
+            
+            // Check if it's a video file
+            const videoExtensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.wmv', '.flv', '.3gp'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (videoExtensions.includes(fileExtension)) {
+                if (file.path) {
+                    selectedVideoPath = file.path;
+                    updateFileDisplay(file.name);
+                    convertBtn.disabled = false;
+                    console.log('Video selected via drag & drop:', selectedVideoPath);
+                } else {
+                    console.log('File path not available in drag & drop, using dialog...');
+                    // Fallback to file dialog
+                    fileSelect.click();
+                }
+            } else {
+                alert('Please drop a video file. Supported formats: MP4, AVI, MOV, MKV, WEBM, WMV, FLV, 3GP');
+            }
+        }
+    });
+
+    // Helper function to update file display
+    function updateFileDisplay(fileName) {
+        fileSelect.innerHTML = `
+            <div class="file-icon">✅</div>
+            <p>Selected: <strong>${fileName}</strong></p>
+            <small>Click or drag to select a different file</small>
+            <input type="file" id="fileInput" accept="video/*" style="display: none;">
+        `;
+        
+        // Re-attach event listeners
+        const newFileInput = document.getElementById('fileInput');
+        newFileInput.addEventListener('change', handleFileInput);
+        
+        // Re-attach click listener
+        fileSelect.addEventListener('click', async () => {
+            const videoPath = await ipcRenderer.invoke('select-video');
+            if (videoPath) {
+                selectedVideoPath = videoPath;
+                const fileName = videoPath.split(/[\\/]/).pop();
+                updateFileDisplay(fileName);
+                convertBtn.disabled = false;
+            }
+        });
+    }
+
+    // Convert button click - SIMPLIFIED AND RELIABLE
+    convertBtn.addEventListener('click', async () => {
+        console.log('=== CONVERT BUTTON CLICKED ===');
+        console.log('selectedVideoPath:', selectedVideoPath);
+        console.log('convertBtn.disabled:', convertBtn.disabled);
+        
+        if (!selectedVideoPath) {
+            alert('Please select a video file first!');
+            return;
+        }
+
+        const fps = document.getElementById('fps').value;
+        const scale = document.getElementById('scale').value;
+        const startTime = document.getElementById('startTime').value || null;
+        const duration = document.getElementById('duration').value || null;
+
+        console.log('Conversion settings:', { fps, scale, startTime, duration });
+
+        try {
+            console.log('Opening save dialog...');
+            const outputPath = await ipcRenderer.invoke('save-gif');
+            if (!outputPath) {
+                console.log('User cancelled save dialog');
+                return;
+            }
+
+            console.log('Output path:', outputPath);
+
+            // Show progress, hide result
+            progress.style.display = 'block';
+            result.style.display = 'none';
+            convertBtn.disabled = true;
+
+            console.log('Starting conversion process...');
+            const conversionResult = await ipcRenderer.invoke('convert-video', {
+                inputPath: selectedVideoPath,
+                outputPath,
+                fps,
+                scale,
+                startTime,
+                duration
+            });
+
+            console.log('Conversion completed successfully:', conversionResult);
+
+            // Show result
+            currentOutputPath = outputPath;
+            resultGif.src = `file://${outputPath}`;
+            downloadLink.href = `file://${outputPath}`;
+            downloadLink.download = outputPath.split(/[\\/]/).pop();
+            
+            progress.style.display = 'none';
+            result.style.display = 'block';
+            
+            console.log('Result displayed to user');
+            
+        } catch (error) {
+            console.error('Conversion failed:', error);
+            alert('Conversion failed: ' + error);
+        } finally {
+            convertBtn.disabled = false;
+            progress.style.display = 'none';
+        }
+    });
+
+    // Progress updates
+    ipcRenderer.on('conversion-progress', (event, progressData) => {
+        console.log('Conversion progress:', progressData.percent + '%');
+        progressFill.style.width = `${progressData.percent}%`;
+        progressText.textContent = `${progressData.percent}% - ${progressData.time}`;
+    });
+
+    // Initial debug info
+    console.log('Giffy app initialized successfully');
+    console.log('Initial selectedVideoPath:', selectedVideoPath);
+    console.log('Initial convertBtn disabled:', convertBtn.disabled);
+</script>
